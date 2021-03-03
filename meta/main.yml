@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: ableton
+  company: Ableton AG
+  description: Install amtool on the Ansible control host
+  license: BSD
+  min_ansible_version: 2.10
+  role_name: amtool
+
+  platforms:
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+    - name: Mac OS X
+      versions:
+        - all
+
+  dependencies: []
