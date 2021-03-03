@@ -1,1 +1,90 @@
 ---
+- name: Set amtool_exe from an environment variable
+  set_fact:
+    amtool_exe: "{{ lookup('env', 'AMTOOL_PATH') }}"
+
+- name: Set amtool_exe with default value
+  set_fact:
+    amtool_exe: "{{ playbook_dir }}/../../.bin/amtool"
+  when: amtool_exe == ""
+
+- name: Set fact to determine if amtool should be installed
+  set_fact:
+    should_install_amtool: false
+
+- name: See if amtool exists
+  delegate_to: localhost
+  stat:
+    path: "{{ amtool_exe }}"
+  register: amtool_exe_exists
+
+- name: Install amtool if it does not exist
+  set_fact:
+    should_install_amtool: true
+  when: not amtool_exe_exists.stat.exists
+
+- name: Get amtool version
+  delegate_to: localhost
+  # amtool prints the version to stderr, which we must redirect to stdout
+  # The first line of the version output looks something like this:
+  # amtool, version 0.16.1 (branch: HEAD, revision: 571caec2)
+  shell: |
+    set -o pipefail
+    {{ amtool_exe }} --version 2>&1 |
+    head -1 |
+    awk '{print $3}'
+  args:
+    executable: /bin/bash
+  changed_when: false
+  register: amtool_version
+  when: amtool_exe_exists.stat.exists
+
+- name: Install amtool if the version does not match
+  set_fact:
+    should_install_amtool: true
+  when: amtool_exe_exists.stat.exists and amtool_version.stdout != alertmanager_version
+
+- name: Ensure amtool_exe's parent directory exists
+  delegate_to: localhost
+  file:
+    path: "{{ amtool_exe | dirname }}"
+    state: directory
+    mode: "0755"
+  when: should_install_amtool
+
+- name: Get host platform name
+  command: uname -s
+  delegate_to: localhost
+  changed_when: false
+  register: uname_system
+  when: should_install_amtool
+
+- name: Set fact for amtool binary distribution file basename
+  set_fact:
+    amtool_dist_basename: "alertmanager-{{ alertmanager_version }}\
+      .{{ uname_system.stdout | lower }}-amd64"
+  when: should_install_amtool
+
+- name: Get amtool binary zipfile
+  delegate_to: localhost
+  get_url:
+    url: "https://github.com/prometheus/alertmanager/releases/download\
+      /v{{ alertmanager_version }}/{{ amtool_dist_basename }}.tar.gz"
+    dest: "/tmp/{{ amtool_dist_basename }}.tar.gz"
+  when: should_install_amtool
+
+- name: Unarchive amtool tarball
+  delegate_to: localhost
+  unarchive:
+    src: "/tmp/{{ amtool_dist_basename }}.tar.gz"
+    dest: "/tmp"
+    mode: "0755"
+  when: should_install_amtool
+
+- name: Install amtool
+  delegate_to: localhost
+  copy:
+    src: "/tmp/{{ amtool_dist_basename }}/amtool"
+    dest: "{{ amtool_exe }}"
+    mode: "0755"
+  when: should_install_amtool
