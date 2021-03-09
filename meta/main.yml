@@ -18,4 +18,4 @@ galaxy_info:
       versions:
         - all
 
-  dependencies: []
+dependencies: []
