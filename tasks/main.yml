@@ -5,7 +5,7 @@
 
 - name: Set amtool_exe with default value
   set_fact:
-    amtool_exe: "{{ playbook_dir }}/../../.bin/amtool"
+    amtool_exe: "{{ amtool_install_path }}/amtool"
   when: amtool_exe == ""
 
 - name: Set fact to determine if amtool should be installed

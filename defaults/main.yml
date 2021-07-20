@@ -1,0 +1,5 @@
+---
+# Where to install amtool to. By default, this is meant to be the ".bin" directory under
+# a project's top-level folder which contains an Ansible collection. Note that this value
+# can also be overridden by specifying AMTOOL_PATH as an environment variable.
+amtool_install_path: "{{ playbook_dir }}/../../.bin"
