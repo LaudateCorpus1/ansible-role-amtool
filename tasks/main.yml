@@ -13,7 +13,7 @@
     should_install_amtool: false
 
 - name: See if amtool exists
-  delegate_to: localhost
+  delegate_to: "{{ amtool_host }}"
   stat:
     path: "{{ amtool_exe }}"
   register: amtool_exe_exists
@@ -24,7 +24,7 @@
   when: not amtool_exe_exists.stat.exists
 
 - name: Get amtool version
-  delegate_to: localhost
+  delegate_to: "{{ amtool_host }}"
   # amtool prints the version to stderr, which we must redirect to stdout
   # The first line of the version output looks something like this:
   # amtool, version 0.16.1 (branch: HEAD, revision: 571caec2)
@@ -45,7 +45,7 @@
   when: amtool_exe_exists.stat.exists and amtool_version.stdout != alertmanager_version
 
 - name: Ensure amtool_exe's parent directory exists
-  delegate_to: localhost
+  delegate_to: "{{ amtool_host }}"
   file:
     path: "{{ amtool_exe | dirname }}"
     state: directory
@@ -54,7 +54,7 @@
 
 - name: Get host platform name
   command: uname -s
-  delegate_to: localhost
+  delegate_to: "{{ amtool_host }}"
   changed_when: false
   register: uname_system
   when: should_install_amtool
@@ -66,7 +66,7 @@
   when: should_install_amtool
 
 - name: Get amtool binary zipfile
-  delegate_to: localhost
+  delegate_to: "{{ amtool_host }}"
   get_url:
     url: "https://github.com/prometheus/alertmanager/releases/download\
       /v{{ alertmanager_version }}/{{ amtool_dist_basename }}.tar.gz"
@@ -74,17 +74,19 @@
   when: should_install_amtool
 
 - name: Unarchive amtool tarball
-  delegate_to: localhost
+  delegate_to: "{{ amtool_host }}"
   unarchive:
     src: "/tmp/{{ amtool_dist_basename }}.tar.gz"
     dest: "/tmp"
     mode: "0755"
+    remote_src: true
   when: should_install_amtool
 
 - name: Install amtool
-  delegate_to: localhost
+  delegate_to: "{{ amtool_host }}"
   copy:
     src: "/tmp/{{ amtool_dist_basename }}/amtool"
     dest: "{{ amtool_exe }}"
     mode: "0755"
+    remote_src: true
   when: should_install_amtool
