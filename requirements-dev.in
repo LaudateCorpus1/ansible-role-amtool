@@ -3,6 +3,4 @@ ansible-lint
 black
 molecule
 molecule-docker
-pytest-socket
 pytest-testinfra
-python-jenkins
