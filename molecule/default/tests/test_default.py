@@ -1,3 +1,5 @@
+"""Molecule tests for the default scenario."""
+
 import os
 
 import testinfra.utils.ansible_runner
@@ -9,6 +11,7 @@ testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
 
 
 def test_amtool_installed(host):
+    """Test that amtool is installed in the expected directory."""
     test_bin_dir = host.file("/tmp/bin")
     test_amtool = host.file("/tmp/bin/amtool")
 
